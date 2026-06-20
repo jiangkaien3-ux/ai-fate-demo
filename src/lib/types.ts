@@ -40,7 +40,7 @@ export interface BaziResult {
   shengxiao: string;
   nayin: string[];
   shishen: string[];
-  hiddenStems: string[];
+  hidden_stems: string[];
 }
 
 export interface ChatMessage {

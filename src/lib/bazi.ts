@@ -38,22 +38,22 @@ export function getHourGanZhiIndex(dayGanZhiIndex: number, hour: number): number
 }
 
 export interface BaziOutput {
-  yearPillar: { stem: string; branch: string };
-  monthPillar: { stem: string; branch: string };
-  dayPillar: { stem: string; branch: string };
-  hourPillar: { stem: string; branch: string };
-  fourPillars: string;
-  dayMaster: string;
-  dayMasterWuxing: string;
+  year_pillar: { stem: string; branch: string };
+  month_pillar: { stem: string; branch: string };
+  day_pillar: { stem: string; branch: string };
+  hour_pillar: { stem: string; branch: string };
+  four_pillars: string;
+  day_master: string;
+  day_master_wuxing: string;
   gender: string;
-  wuxingDistribution: Record<string, number>;
-  wuxingSummary: string;
+  wuxing_distribution: Record<string, number>;
+  wuxing_summary: string;
   zodiac: string;
-  lunarBirthday: string;
+  lunar_birthday: string;
   shengxiao: string;
   nayin: string[];
   shishen: string[];
-  hiddenStems: string[];
+  hidden_stems: string[];
 }
 
 export function calculateBazi(birthDate: Date, birthHour: number, birthMinute: number, gender: string): BaziOutput {
@@ -104,30 +104,30 @@ export function calculateBazi(birthDate: Date, birthHour: number, birthMinute: n
   const day = parseGanZhi(dayGanZhiStr);
   const hour = { stem: hourStem, branch: hourBranch };
 
-  const fourPillars = `${yearGanZhiStr} ${monthGanZhiStr} ${dayGanZhiStr} ${hourGanZhiStr}`;
-  const dayMaster = day.stem;
-  const dayMasterWuxing = WUXING_MAP[day.stem] || "";
+  const four_pillars = `${yearGanZhiStr} ${monthGanZhiStr} ${dayGanZhiStr} ${hourGanZhiStr}`;
+  const day_master = day.stem;
+  const day_master_wuxing = WUXING_MAP[day.stem] || "";
 
   // 五行统计
   const stems = [year.stem, month.stem, day.stem, hour.stem];
   const branches = [year.branch, month.branch, day.branch, hour.branch];
   const allGanZhi = [...stems, ...branches];
 
-  const wuxingDistribution: Record<string, number> = { 木: 0, 火: 0, 土: 0, 金: 0, 水: 0 };
+  const wuxing_distribution: Record<string, number> = { 木: 0, 火: 0, 土: 0, 金: 0, 水: 0 };
   allGanZhi.forEach((gz) => {
     const wx = WUXING_MAP[gz];
-    if (wx && wx in wuxingDistribution) {
-      wuxingDistribution[wx]++;
+    if (wx && wx in wuxing_distribution) {
+      wuxing_distribution[wx]++;
     }
   });
 
   // 五行统计文字描述
-  const sorted = Object.entries(wuxingDistribution)
+  const sorted = Object.entries(wuxing_distribution)
     .filter(([, count]) => count > 0)
     .sort(([, a], [, b]) => b - a);
-  const wuxingSummary =
+  const wuxing_summary =
     sorted.length > 0
-      ? sorted.map(([wx, count]) => `${wx}${count}`).join(" ")
+    ? sorted.map(([wx, count]) => `${wx}${count}`).join(" ")
       : "";
 
   // 地支藏干（简化版，取主要藏干）
@@ -186,7 +186,7 @@ export function calculateBazi(birthDate: Date, birthHour: number, birthMinute: n
   // 十神（以日干为基准）
   const getShishen = (stem: string): string => {
     if (stem === day.stem) return "日主";
-    const dayWxIndex = "木火土金水".indexOf(dayMasterWuxing);
+    const dayWxIndex = "木火土金水".indexOf(day_master_wuxing);
     const stemWxIndex = "木火土金水".indexOf(WUXING_MAP[stem] || "");
     if (dayWxIndex === -1 || stemWxIndex === -1) return "";
 
@@ -208,49 +208,49 @@ export function calculateBazi(birthDate: Date, birthHour: number, birthMinute: n
 
   const shishen = stems.map(getShishen);
 
-  const hiddenStems = branches.map((b) => HIDDEN_STEMS_MAP[b]?.join("、") || "");
+  const hidden_stems = branches.map((b) => HIDDEN_STEMS_MAP[b]?.join("、") || "");
 
   const zodiac = solar.getXingZuo();
-  const lunarBirthday = `${lunarYear}年${lunarMonth}月${lunarDay}日`;
+  const lunar_birthday = `${lunarYear}年${lunarMonth}月${lunarDay}日`;
 
   // 生肖
   const shengxiao = lunar.getYearShengXiao();
 
   return {
-    yearPillar: year,
-    monthPillar: month,
-    dayPillar: day,
-    hourPillar: hour,
-    fourPillars,
-    dayMaster,
-    dayMasterWuxing,
+    year_pillar: year,
+    month_pillar: month,
+    day_pillar: day,
+    hour_pillar: hour,
+    four_pillars,
+    day_master,
+    day_master_wuxing,
     gender,
-    wuxingDistribution,
-    wuxingSummary,
+    wuxing_distribution,
+    wuxing_summary,
     zodiac,
-    lunarBirthday,
+    lunar_birthday,
     shengxiao,
     nayin,
     shishen,
-    hiddenStems,
+    hidden_stems,
   };
 }
 
 export function buildBaziContext(bazi: BaziOutput): string {
   return `
 【命盘信息】
-八字：${bazi.fourPillars}
-日主：${bazi.dayMaster}（${bazi.dayMasterWuxing}）
+八字：${bazi.four_pillars}
+日主：${bazi.day_master}（${bazi.day_master_wuxing}）
 性别：${bazi.gender}
 生肖：${bazi.shengxiao}
 星座：${bazi.zodiac}
-农历：${bazi.lunarBirthday}
+农历：${bazi.lunar_birthday}
 
-年柱：${bazi.yearPillar.stem}${bazi.yearPillar.branch}（纳音${bazi.nayin[0]}，藏干${bazi.hiddenStems[0]}，十神${bazi.shishen[0]}）
-月柱：${bazi.monthPillar.stem}${bazi.monthPillar.branch}（纳音${bazi.nayin[1]}，藏干${bazi.hiddenStems[1]}，十神${bazi.shishen[1]}）
-日柱：${bazi.dayPillar.stem}${bazi.dayPillar.branch}（纳音${bazi.nayin[2]}，藏干${bazi.hiddenStems[2]}，十神${bazi.shishen[2]}）
-时柱：${bazi.hourPillar.stem}${bazi.hourPillar.branch}（纳音${bazi.nayin[3]}，藏干${bazi.hiddenStems[3]}，十神${bazi.shishen[3]}）
+年柱：${bazi.year_pillar.stem}${bazi.year_pillar.branch}（纳音${bazi.nayin[0]}，藏干${bazi.hidden_stems[0]}，十神${bazi.shishen[0]}）
+月柱：${bazi.month_pillar.stem}${bazi.month_pillar.branch}（纳音${bazi.nayin[1]}，藏干${bazi.hidden_stems[1]}，十神${bazi.shishen[1]}）
+日柱：${bazi.day_pillar.stem}${bazi.day_pillar.branch}（纳音${bazi.nayin[2]}，藏干${bazi.hidden_stems[2]}，十神${bazi.shishen[2]}）
+时柱：${bazi.hour_pillar.stem}${bazi.hour_pillar.branch}（纳音${bazi.nayin[3]}，藏干${bazi.hidden_stems[3]}，十神${bazi.shishen[3]}）
 
-五行分布：${bazi.wuxingSummary}
+五行分布：${bazi.wuxing_summary}
 `.trim();
 }
