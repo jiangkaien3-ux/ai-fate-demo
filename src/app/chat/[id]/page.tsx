@@ -204,6 +204,7 @@ export default function ChatPage() {
     quickQuery?: string | null;
   } | null>(null);
   const [ready, setReady] = useState(false);
+  const [noSession, setNoSession] = useState(false);
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [streaming, setStreaming] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -215,25 +216,24 @@ export default function ChatPage() {
       const stored = sessionStorage.getItem("ai_fate_session");
       if (stored) {
         const data = JSON.parse(stored);
-        setSession(data);
-        // 如果有快捷查询，自动发送
-        if (data.quickQuery) {
-          const q = data.quickQuery;
-          // 清除快捷查询避免重复
-          const cleaned = { ...data, quickQuery: null };
-          sessionStorage.setItem("ai_fate_session", JSON.stringify(cleaned));
-          // 延迟一下等渲染完再发送
-          setTimeout(() => handleSend(q, data), 500);
+        if (data?.baziResult && data?.birthInfo) {
+          setSession(data);
+          // 如果有快捷查询，自动发送
+          if (data.quickQuery) {
+            const q = data.quickQuery;
+            const cleaned = { ...data, quickQuery: null };
+            sessionStorage.setItem("ai_fate_session", JSON.stringify(cleaned));
+            setTimeout(() => handleSend(q, data), 500);
+          }
+          setReady(true);
+          return;
         }
-      } else {
-        router.push("/");
-        return;
       }
+      // 无有效session
+      setNoSession(true);
     } catch {
-      router.push("/");
-      return;
+      setNoSession(true);
     }
-    setReady(true);
   }, []);
 
   // 自动滚动
@@ -371,11 +371,31 @@ export default function ChatPage() {
     router.push("/");
   }, [router]);
 
+  if (noSession) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-zinc-950">
+        <div className="flex flex-col items-center gap-4 text-center px-6">
+          <div className="h-16 w-16 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center">
+            <Sparkles className="h-8 w-8 text-zinc-700" />
+          </div>
+          <h2 className="text-lg font-medium text-zinc-400">还没有命盘数据</h2>
+          <p className="text-sm text-zinc-600 max-w-xs">请先完成八字排盘后再查看分析</p>
+          <button
+            onClick={() => router.push("/")}
+            className="mt-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 text-white text-sm font-medium hover:from-violet-500 hover:to-purple-500 transition-all shadow-lg shadow-purple-900/30"
+          >
+            开始测算
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (!ready || !session) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-zinc-950">
         <div className="flex flex-col items-center gap-3">
-          <Sparkles className="h-8 w-8 text-purple-500 animate-pulse" />
+          <div className="h-8 w-8 rounded-full border-2 border-purple-500/30 border-t-purple-500 animate-spin" />
           <p className="text-sm text-zinc-600">加载中...</p>
         </div>
       </div>
