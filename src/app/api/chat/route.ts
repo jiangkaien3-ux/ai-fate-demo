@@ -11,11 +11,13 @@ export async function POST(req: NextRequest) {
     const envBaseUrl = (process.env.AI_BASE_URL || "https://api.openai.com/v1").replace(/\/+$/, "");
     const envModel = process.env.AI_MODEL || "gpt-4o-mini";
 
-    // 如果前端传了agentConfig且有apiKey，优先用它（Admin配置）
-    // 否则用环境变量
-    const apiKey = (agentConfig?.apiKey || envApiKey);
+    // 判断 agentConfig 是"角色配置"（来自Supabase）还是"模型覆盖"（带apiKey的）
+    // 角色配置：有 model 和 system_prompt，但没有 apiKey → 模型用环境变量
+    // 模型覆盖：有 apiKey → 模型用 agentConfig 的
+    const isRoleConfig = agentConfig?.system_prompt && !agentConfig?.apiKey;
+    const apiKey = agentConfig?.apiKey || envApiKey;
     const baseUrl = agentConfig?.baseUrl?.replace(/\/+$/, "") || envBaseUrl;
-    const modelName = agentConfig?.model || envModel;
+    const modelName = isRoleConfig ? envModel : (agentConfig?.model || envModel);
 
     if (!apiKey) {
       return new Response(
